@@ -19,6 +19,7 @@ export default function ShowScreen({ navigation, route }) {
   var loggedInUserID = useSelector(state => state.account.user_id);
 
   const [post, setPost] = useState(null);
+  const [ExifData, setExifData] = useState(null);
 
   const [Comment, setComment] = useState("");
   const [allUserComments, setAllUserComments] = useState([]);
@@ -45,6 +46,13 @@ export default function ShowScreen({ navigation, route }) {
     ) : null);
   });
 
+  function capitalizeFirstLetter(string) {
+    if (string)
+      return string.charAt(0).toUpperCase() + string.slice(1);
+    else
+      return "";
+  }
+
   async function getOnePost(id) {
     setIsLoading(true);
 
@@ -54,7 +62,10 @@ export default function ShowScreen({ navigation, route }) {
       })
 
       setPost(response.data);
+      setExifData(JSON.parse(response.data.exif_tags));
       setAllUserComments(response.data.comments);
+
+      console.log(response.data)
 
       setIsLoading(false);
     } 
@@ -148,35 +159,43 @@ export default function ShowScreen({ navigation, route }) {
               <Text>{post.description}</Text>
             </View>
 
-            <Text style={[styles.text, {fontSize: 18, textDecorationLine: "underline", marginTop: 20, marginBottom: 5}]}>Geolocation Tags</Text>
-            <MapView 
-              style={{width: "100%", height: 220, marginVertical: 5}} 
-              initialRegion={{
-                latitude: post.gps_lat,
-                longitude: post.gps_long,
-                latitudeDelta: 0.005,
-                longitudeDelta: 0.0025,
-              }}
-              
-            >
-              <Marker
-                
-                coordinate={{
-                  latitude: post.gps_lat,
-                  longitude: post.gps_long
-                }}
-                title={"Image Location"}
-              />
-            </MapView>
-
+            {ExifData?.GPSLatitude && ExifData?.GPSLongitude ? (
+              <View style={{width: "100%"}}>
+                <Text style={[styles.text, {fontSize: 18, textDecorationLine: "underline", marginTop: 20, marginBottom: 5}]}>Geolocation Tags</Text>
+                <MapView 
+                  style={{width: "100%", height: 220, marginVertical: 5}} 
+                  initialRegion={{
+                    latitude: ExifData.GPSLatitude,
+                    longitude: ExifData.GPSLongitude,
+                    latitudeDelta: 0.005,
+                    longitudeDelta: 0.0025,
+                  }}
+                  
+                >
+                  <Marker
+                    
+                    coordinate={{
+                      latitude: ExifData.GPSLatitude,
+                      longitude: ExifData.GPSLongitude
+                    }}
+                    title={"Image Location"}
+                  />
+                </MapView>
+              </View>
+            ) : (
+              <View />
+            )
+            }
+            
             <Text style={[styles.text, {fontSize: 18, textDecorationLine: "underline", marginTop: 20, marginBottom: 5}]}>EXIF Data</Text>
             <View style={[styles.textContainerView, { marginVertical: 5}]}>
               <Text>{
-                `Camera: ${post.camera_model}\nTaken on: ${post.image_taken}\n\n` +
-                `GPS Coords:  ${post.gps_lat.toFixed(6)}, ${post.gps_long.toFixed(6)}\n\n` +
-                `Shutter Speed: ${post.camera_exposure}s\nF-stop: ${post.camera_fnumber}\nISO: ${post.camera_iso}\nFlash fired: ${post.camera_isFlash}`}
+                `Camera: ${ExifData.Make ? (capitalizeFirstLetter(ExifData.Make) + " " + ExifData.Model) : "-"}\nTaken on: ${ExifData.DateTime ? ExifData.DateTime : "-"}\n\n` +
+                `GPS Coords:  ${(ExifData.GPSLatitude && ExifData.GPSLongitude) ? (ExifData.GPSLatitude.toFixed(6) + ", " + ExifData.GPSLongitude?.toFixed(6)) : "-"}\n\n` +
+                `Shutter Speed: ${ExifData.ExposureTime ? (ExifData.ExposureTime + "s") : "-"}\nF-stop: ${ExifData.FNumber ? ExifData.FNumber : "-"}\nISO: ${ExifData.ISOSpeedRatings ? ExifData.ISOSpeedRatings : "-"}\nFlash fired: ${ExifData.Flash != undefined ? ExifData.Flash : "-"}`}
               </Text>
             </View>
+
 
             <Text style={[styles.text, {fontSize: 18, textDecorationLine: "underline", marginTop: 20, marginBottom: 5}]}>User Comments</Text>
             <View style={{flexDirection: "row", width: "100%"}}>

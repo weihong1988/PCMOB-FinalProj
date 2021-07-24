@@ -4,6 +4,7 @@ import * as ImagePicker from 'expo-image-picker';
 import * as ImageManipulator from 'expo-image-manipulator';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
+import {GOOGLEAPI_URL, GOOGLEAPI_KEY} from "../secrets/keys";
 import { API, API_CREATE, API_ONEPOST, API_IMAGE_URL } from "../constants/API";
 import axios from 'axios';
 
@@ -35,14 +36,7 @@ export default function CreateEditScreen({ route, navigation }) {
 
   const [Description, setDescription] = useState("");
 
-  const [ExifImageTaken, setExifImageTaken] = useState("");
-  const [ExifGPSLat, setExifGPSLat] = useState("");
-  const [ExifGPSLong, setExifGPSLong] = useState("");
-  const [ExifCameraModel, setExifCameraModel] = useState("");
-  const [ExifImageISO, setExifImageISO] = useState("");
-  const [ExifImageFnumber, setExifImageFnumber] = useState("");
-  const [ExifImageExposure, setExifImageExposure] = useState("");
-  const [ExifImageFlash, setExifImageFlash] = useState("");
+  const [ExifData, setExifData] = useState(null);
 
   const [isLoading, setIsLoading] = useState(false);
 
@@ -68,18 +62,11 @@ export default function CreateEditScreen({ route, navigation }) {
     return removeListener;
   }, [])
 
-  function capitalizeFirstLetter(string) {
-    if (string)
-      return string.charAt(0).toUpperCase() + string.slice(1);
-    else
-      return "";
-  }
-
   async function ResizeAndSetImage(imageURI, doRotate)
   {
     const FormattedImage = await ImageManipulator.manipulateAsync(
       imageURI,
-      [{resize: { width: 1000 }}, { rotate: doRotate ? -90 : 0 }],
+      [{resize: { width: 1000 }}, { rotate: doRotate ? 90 : 0 }],
       {compress: 0.9, base64: true}
     );
 
@@ -98,18 +85,11 @@ export default function CreateEditScreen({ route, navigation }) {
 
     await ResizeAndSetImage(galleryResponse.localUri || galleryResponse.uri, false);
 
-    setExifImageTaken(galleryResponse.exif.DateTime);
-    setExifGPSLat(galleryResponse.exif.GPSLatitude);
-    setExifGPSLong(galleryResponse.exif.GPSLongitude);
-    setExifCameraModel(capitalizeFirstLetter(galleryResponse.exif.Make) + " " + galleryResponse.exif.Model);
-    setExifImageISO(galleryResponse.exif.ISOSpeedRatings);
-    setExifImageFnumber(galleryResponse.exif.FNumber);
-    setExifImageExposure(galleryResponse.exif.ExposureTime);
-    setExifImageFlash(galleryResponse.exif.Flash);
+    setExifData(galleryResponse.exif);
   };
 
   function LaunchCamera() {
-    navigation.navigate("Camera", {returnScreen: "Add"});
+    navigation.navigate("Camera", {returnScreen: "CreateEdit"});
   }
 
   React.useEffect(() => {
@@ -120,21 +100,9 @@ export default function CreateEditScreen({ route, navigation }) {
 
   React.useEffect(() => {
     if (route.params?.exif) {
-      setExifImageTaken(route.params.exif.DateTime);
-      setExifCameraModel(capitalizeFirstLetter(route.params.exif.Make) + " " + route.params.exif.Model);
-      setExifImageISO(route.params.exif.ISOSpeedRatings);
-      setExifImageFnumber(route.params.exif.FNumber);
-      setExifImageExposure(route.params.exif.ExposureTime);
-      setExifImageFlash(route.params.exif.Flash);
+      setExifData(route.params.exif)
     }
   }, [route.params?.exif]);
-
-  React.useEffect(() => {
-    if (route.params?.location) {
-      setExifGPSLat(route.params.location.coords.latitude);
-      setExifGPSLong(route.params.location.coords.longitude);
-    }
-  }, [route.params?.location]);
 
   async function getOnePost(id) {
     setIsLoading(true);
@@ -183,19 +151,11 @@ export default function CreateEditScreen({ route, navigation }) {
       setIsLoading(true);
 
       try {
-        const response = await axios.post(API + API_CREATE, {
+        var response = await axios.post(API + API_CREATE, {
           Title,
           imageData,
           Description,
-
-          ExifImageTaken,
-          ExifGPSLat,
-          ExifGPSLong,
-          ExifCameraModel,
-          ExifImageISO,
-          ExifImageFnumber,
-          ExifImageExposure,
-          ExifImageFlash,
+          ExifData,
         }, 
         {
           headers: { Authorization: `JWT ${token}` },
@@ -264,15 +224,7 @@ export default function CreateEditScreen({ route, navigation }) {
           Title,
           imageData,
           Description,
-
-          ExifImageTaken,
-          ExifGPSLat,
-          ExifGPSLong,
-          ExifCameraModel,
-          ExifImageISO,
-          ExifImageFnumber,
-          ExifImageExposure,
-          ExifImageFlash,
+          ExifData,
         }, 
         {
           headers: { Authorization: `JWT ${token}` },
@@ -292,6 +244,64 @@ export default function CreateEditScreen({ route, navigation }) {
       }
     }
   }
+
+  // async function submitToGoogle(imageString) {
+  //   try {
+  //     setIsLoading(true);
+
+  //     const requests = [
+  //       {
+  //         features: [
+  //           { type: "LABEL_DETECTION", maxResults: 5 },
+  //         ],
+  //         image: {
+  //           content: imageString
+  //         }
+  //       }
+  //     ]
+
+  //     const response = await axios.post("", {
+  //       requests
+  //     }, 
+  //     {
+  //       headers: { 
+  //         Accept: "application/json",
+  //         "Content-Type": "application/json"
+  //       },
+  //     });
+
+  //     console.log(response.data)
+
+  //   }
+  //   catch (error) {
+  //     setIsLoading(false);
+  //     console.log(error);
+  //   }
+
+    //   let response = await fetch(
+    //     "https://vision.googleapis.com/v1/images:annotate?key=" +
+    //       Environment["GOOGLE_CLOUD_VISION_API_KEY"],
+    //     {
+    //       headers: {
+    //         Accept: "application/json",
+    //         "Content-Type": "application/json"
+    //       },
+    //       method: "POST",
+    //       body: body
+    //     }
+    //   );
+    //   let responseJson = await response.json();
+    //   console.log(responseJson);
+    //   this.setState({
+    //     googleResponse: responseJson,
+    //     uploading: false
+    //   });
+    // } catch (error) {
+    //   console.log(error);
+    // }
+  //}
+
+
 
   return (
     <View style={styles.container}>

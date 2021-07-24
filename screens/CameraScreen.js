@@ -57,7 +57,14 @@ export default function CameraScreen({ route, navigation }) {
   async function takePicture() {
     const photo = await cameraRef.current.takePictureAsync({ exif: true });
 
-    navigation.navigate({ name: returnScreen, params: { imageURI: photo.uri, exif: photo.exif, location: location }, merge: true, });
+    photo.exif.GPSProcessingMethod = "GPS";
+    photo.exif.GPSLatitude = location.coords.latitude;
+    photo.exif.GPSLongitude = location.coords.longitude;
+
+    photo.exif.GPSLatitudeRef = location.coords.latitude > 0 ? "N" : "S";
+    photo.exif.GPSLongitudeRef = location.coords.latitude > 0 ? "E" : "W";
+
+    navigation.navigate({ name: returnScreen, params: { imageURI: photo.uri, exif: photo.exif }, merge: true, });
   }
 
   return (
