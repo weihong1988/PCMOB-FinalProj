@@ -21,7 +21,7 @@ export default function BlogStack() {
 
   return (
     <InnerStack.Navigator>
-      <InnerStack.Screen name="Index" component={IndexScreen} options={{ title: "Posts", ...headerOptions, headerLeft: null}} />
+      <InnerStack.Screen name="Index" component={IndexScreen} options={{ title: "My Posts", ...headerOptions, headerLeft: null}} />
       <InnerStack.Screen name="CreateEdit" component={CreateEditScreen} options={({ route }) => ({ title: route.params.title, ...headerOptions })} />
       <InnerStack.Screen name="Details" component={ShowScreen} options={headerOptions} />
     </InnerStack.Navigator>

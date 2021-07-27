@@ -3,6 +3,8 @@ import { ActivityIndicator, View, Text, StyleSheet, TextInput, TouchableOpacity,
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import  MapView, { Marker } from 'react-native-maps';
 
+import { Chip } from 'react-native-paper';
+
 import { API, API_COMMENT, API_ONEPOST, API_IMAGE_URL } from "../constants/API";
 import axios from 'axios';
 
@@ -23,6 +25,8 @@ export default function ShowScreen({ navigation, route }) {
 
   const [Comment, setComment] = useState("");
   const [allUserComments, setAllUserComments] = useState([]);
+
+  const [GoogleImageTags, setGoogleImageTags] = useState(null);
 
   const [isLoading, setIsLoading] = useState(true);
 
@@ -64,8 +68,7 @@ export default function ShowScreen({ navigation, route }) {
       setPost(response.data);
       setExifData(JSON.parse(response.data.exif_tags));
       setAllUserComments(response.data.comments);
-
-      console.log(response.data)
+      setGoogleImageTags(response.data.tags);
 
       setIsLoading(false);
     } 
@@ -127,6 +130,18 @@ export default function ShowScreen({ navigation, route }) {
     }) 
   }
 
+  function MapImageTags(GoogleImageTags) {
+    if (GoogleImageTags) {
+      return GoogleImageTags.map((data, index) => {
+        return (
+          <Chip icon="tag" key={index} style={{marginRight: 5, marginBottom: 10}}>{data.tag}</Chip>
+        )
+      }) 
+    }
+    else
+      return null;
+  }
+
   useEffect(() => {
     const removeListener = navigation.addListener("focus", () => {
       getOnePost(postID);
@@ -149,12 +164,19 @@ export default function ShowScreen({ navigation, route }) {
               <Image source={{ uri: API_IMAGE_URL + post?.createdUserObject.profilePic }} style={{ width: 80, height: 80 }} borderRadius={40} />
               <View style={{marginLeft: 20, alignItems: "flex-start"}}>
                 <Text style={[styles.title, styles.text]}>{post?.createdUserObject.nickname}</Text>
-                <Text style={[styles.text, {fontSize: 16}]}>Posted on: {new Date(post.createdAt * 1000).toDateString() + ' ' + new Date(post.createdAt * 1000).toLocaleTimeString('en-US')}</Text>
+                <Text style={{fontSize: 16, color: isDark ? "lightgrey" : "grey"}}>Posted on: {new Date(post.createdAt * 1000).toDateString() + ' ' + new Date(post.createdAt * 1000).toLocaleTimeString('en-US')}</Text>
               </View>           
             </View>
 
             <Text style={[styles.title, styles.text, {textDecorationLine: "underline", marginVertical: 5}]}>{post.title}</Text>
             <Image source={{ uri: API_IMAGE_URL + post.image }} style={{ width: screenWidth, height: screenWidth, marginVertical: 5 }} resizeMode="contain" />
+            
+            {GoogleImageTags ? (
+              <View style={{flexDirection: "row", flexWrap: "wrap", marginVertical: 10}}>
+                {MapImageTags(GoogleImageTags)}
+              </View>
+            ) : (<View />)}
+            
             <View style={[styles.textContainerView, { marginVertical: 5}]}>
               <Text>{post.description}</Text>
             </View>
@@ -170,10 +192,10 @@ export default function ShowScreen({ navigation, route }) {
                     latitudeDelta: 0.005,
                     longitudeDelta: 0.0025,
                   }}
-                  
+                  onLayout={() => { this.markerRef.showCallout(); }}
                 >
                   <Marker
-                    
+                    ref={ref => { this.markerRef = ref; }}
                     coordinate={{
                       latitude: ExifData.GPSLatitude,
                       longitude: ExifData.GPSLongitude

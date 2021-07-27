@@ -51,6 +51,9 @@ export const lightStyles = {
     flex: 1,
     backgroundColor: "#ffc",
   },
+  card: {
+    backgroundColor: "#ffc",
+  },
   text: {
     color: "black",
   },
@@ -72,6 +75,9 @@ export const lightStyles = {
 export const darkStyles = {
   container: {
     flex: 1,
+    backgroundColor: "#878683",
+  },
+  card: {
     backgroundColor: "#878683",
   },
   text: {

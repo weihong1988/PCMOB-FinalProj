@@ -7,7 +7,7 @@ import { logOutAction } from '../redux/ducks/blogAuth';
 
 import { commonStyles, darkStyles, lightStyles } from "../styles/commonStyles";
 
-import { API, API_POSTS, API_IMAGE_URL } from "../constants/API";
+import { API, API_MYPOSTS, API_IMAGE_URL } from "../constants/API";
 import axios from "axios";
 
 export default function IndexScreen({ navigation, route }) {
@@ -40,19 +40,19 @@ export default function IndexScreen({ navigation, route }) {
 
   useEffect(() => {
     const removeListener = navigation.addListener("focus", () => {
-      getPosts();
+      getMyPosts();
     });
 
-    getPosts();
+    getMyPosts();
 
     return removeListener;
   }, []);
 
-  async function getPosts() {
+  async function getMyPosts() {
     setIsLoading(true);
 
     try {
-      const response = await axios.get(API + API_POSTS, {
+      const response = await axios.get(API + API_MYPOSTS, {
         headers: { Authorization: `JWT ${token}` },
       })
 
@@ -73,7 +73,7 @@ export default function IndexScreen({ navigation, route }) {
   async function onRefresh()
   {
     setRefreshing(true);
-    await getPosts();
+    await getMyPosts();
     setRefreshing(false);
   }
 

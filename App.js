@@ -11,6 +11,8 @@ import BlogStack from "./components/BlogStack";
 import SignInSignUpScreen from "./screens/SignInSignUpScreen";
 import CameraScreen from "./screens/CameraScreen";
 import AccountScreen from "./screens/AccountScreen";
+import BrowseStackComponent from "./components/BrowseStack";
+import SearchStackComponent from "./components/SearchStack";
 
 import { useSelector, useDispatch, Provider } from 'react-redux';
 import { commonStyles, darkStyles, lightStyles } from "./styles/commonStyles";
@@ -24,6 +26,12 @@ function LoggedInStackComponent() {
   const isDark = useSelector(state => state.account.isDark);
   const styles = { ...commonStyles, ...isDark ? darkStyles : lightStyles };
 
+  const headerOptions = {
+    headerStyle: styles.header,
+    headerTitleStyle: styles.headerTitle,
+    headerTintColor: styles.headerTint
+  }
+
   return (
     <LoggedInTab.Navigator
       screenOptions={({ route }) => ({
@@ -32,8 +40,12 @@ function LoggedInStackComponent() {
 
           if (route.name === 'Account')
             iconName = "account-cog";
-          else
-            iconName = "camera-burst"; 
+          else if (route.name === 'BrowseStack')
+            iconName = "apple-safari";
+          else if (route.name === 'SearchStack')
+            iconName = "feature-search-outline";
+          else 
+            iconName = "apps"; 
 
           return <MaterialCommunityIcons name={iconName} size={size} color={color} />;
         },
@@ -48,9 +60,11 @@ function LoggedInStackComponent() {
       }}
       initialRouteName="AccountStack"
     >
-      <LoggedInTab.Screen name="Blog" component={BlogStack} />
+      <LoggedInTab.Screen name="Blog" component={BlogStack} options={{title: "My Blog"}}/>
+      <LoggedInTab.Screen name="BrowseStack" component={BrowseStackComponent} options={{title: "Explore"}}/>
+      <LoggedInTab.Screen name="SearchStack" component={SearchStackComponent} options={{title: "Search"}}/>
       <LoggedInTab.Screen name="Account" component={AccountScreen} options={{
-        title: "Your Account",
+        title: "My Account",
         headerStyle: styles.header,
         headerTitleStyle: styles.headerTitle,
         headerLeft: null

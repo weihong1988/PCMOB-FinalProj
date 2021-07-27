@@ -4,6 +4,8 @@ import * as ImagePicker from 'expo-image-picker';
 import * as ImageManipulator from 'expo-image-manipulator';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
+import { Chip } from 'react-native-paper';
+
 import {GOOGLEAPI_URL, GOOGLEAPI_KEY} from "../secrets/keys";
 import { API, API_CREATE, API_ONEPOST, API_IMAGE_URL } from "../constants/API";
 import axios from 'axios';
@@ -39,6 +41,10 @@ export default function CreateEditScreen({ route, navigation }) {
   const [ExifData, setExifData] = useState(null);
 
   const [isLoading, setIsLoading] = useState(false);
+
+  const [GoogleImageTags, setGoogleImageTags] = useState(null);
+  const [isGoogleUpload, setIsGoogleUpload] = useState(false);
+  const [isGoogleDone, setIsGoogleDone] = useState(false);
 
   const dispatch = useDispatch();
 
@@ -156,6 +162,7 @@ export default function CreateEditScreen({ route, navigation }) {
           imageData,
           Description,
           ExifData,
+          GoogleImageTags,
         }, 
         {
           headers: { Authorization: `JWT ${token}` },
@@ -225,6 +232,7 @@ export default function CreateEditScreen({ route, navigation }) {
           imageData,
           Description,
           ExifData,
+          GoogleImageTags,
         }, 
         {
           headers: { Authorization: `JWT ${token}` },
@@ -245,63 +253,88 @@ export default function CreateEditScreen({ route, navigation }) {
     }
   }
 
-  // async function submitToGoogle(imageString) {
-  //   try {
-  //     setIsLoading(true);
+  function MapImageTags(GoogleImageTags) {
+    if (GoogleImageTags) {
+      return GoogleImageTags.map((data, index) => {
+        return (
+          <Chip icon="tag" key={index} style={{marginRight: 5, marginBottom: 10}}>{data.description}</Chip>
+        )
+      }) 
+    }
+    else
+      return null;
+  }
 
-  //     const requests = [
-  //       {
-  //         features: [
-  //           { type: "LABEL_DETECTION", maxResults: 5 },
-  //         ],
-  //         image: {
-  //           content: imageString
-  //         }
-  //       }
-  //     ]
+  async function submitToGoogleAPI(imageString) {
+    const requests = [{
+      features: [{ 
+        type: "LABEL_DETECTION", maxResults: 5 
+      },],
+      image: {
+        content: imageString
+      }
+    }];
 
-  //     const response = await axios.post("", {
-  //       requests
-  //     }, 
-  //     {
-  //       headers: { 
-  //         Accept: "application/json",
-  //         "Content-Type": "application/json"
-  //       },
-  //     });
+    setIsGoogleUpload(true);
 
-  //     console.log(response.data)
+    try {
+      // const response = await axios.post(GOOGLEAPI_URL + GOOGLEAPI_KEY, {
+      //   requests
+      // }, 
+      // {
+      //   headers: { 
+      //     Accept: "application/json",
+      //     "Content-Type": "application/json"
+      //   },
+      // });
 
-  //   }
-  //   catch (error) {
-  //     setIsLoading(false);
-  //     console.log(error);
-  //   }
+      const testdata = {
+        responses: [{
+          labelAnnotations: [{
+            description: "Sky",
+            mid: "/m/01bqvp",
+            score: 0.9747512,
+            topicality: 0.9747512,
+          },
+          {
+            description: "Building",
+            mid: "/m/0cgh4",
+            score: 0.9708724,
+            topicality: 0.9708724,
+          },
+          {
+            description: "Skyscraper",
+            mid: "/m/079cl",
+            score: 0.96657646,
+            topicality: 0.96657646,
+          },
+          {
+            description: "Daytime",
+            mid: "/m/02q7ylj",
+            score: 0.9478813,
+            topicality: 0.9478813,
+          },
+          {
+            description: "Street light",
+            mid: "/m/033rq4",
+            score: 0.90216017,
+            topicality: 0.90216017,
+              },
+            ],
+          },
+        ],
+      }
 
-    //   let response = await fetch(
-    //     "https://vision.googleapis.com/v1/images:annotate?key=" +
-    //       Environment["GOOGLE_CLOUD_VISION_API_KEY"],
-    //     {
-    //       headers: {
-    //         Accept: "application/json",
-    //         "Content-Type": "application/json"
-    //       },
-    //       method: "POST",
-    //       body: body
-    //     }
-    //   );
-    //   let responseJson = await response.json();
-    //   console.log(responseJson);
-    //   this.setState({
-    //     googleResponse: responseJson,
-    //     uploading: false
-    //   });
-    // } catch (error) {
-    //   console.log(error);
-    // }
-  //}
+      setIsGoogleUpload(false);
+      setIsGoogleDone(true);
 
-
+      setGoogleImageTags(testdata.responses[0].labelAnnotations);
+    }
+    catch (error) {
+      setIsGoogleUpload(false);
+      console.log(error);
+    }
+  }
 
   return (
     <View style={styles.container}>
@@ -324,6 +357,21 @@ export default function CreateEditScreen({ route, navigation }) {
             
             <Text style={[additionalStyles.label, styles.text]}>Post Image</Text>
             <PhotoPickerWithError postPic={true} isDark={isDark} imageData={imageData} origImageURL={origImageURL} LaunchGallery={LaunchGallery} LaunchCamera={LaunchCamera} ErrorText={imageDataError} />
+
+            <Text style={[additionalStyles.label, styles.text]}>Image Tags</Text>
+            <View style={{flexDirection: "row", width: "100%", justifyContent: "space-between", marginBottom: 10}}>
+              <View style={{flexDirection: "row", flexWrap: "wrap"}}>
+                {MapImageTags(GoogleImageTags)}
+              </View>
+
+              {isGoogleDone ? <View /> : (
+                isGoogleUpload ? (<ActivityIndicator size="large" color="#0000ff" style={{marginRight: 20}} />) : (
+                  <TouchableOpacity onPress={() => imageData ? submitToGoogleAPI(imageData) : null} style={styles.button}>
+                    <Text style={styles.buttonText}>Auto Tag</Text>
+                  </TouchableOpacity>
+                )
+              )}             
+            </View>
 
             <Text style={[additionalStyles.label, styles.text]}>Post Description</Text>
             <View style={[styles.inputView, {height: 100, marginBottom: 20}]}>
