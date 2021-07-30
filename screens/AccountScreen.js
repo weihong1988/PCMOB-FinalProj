@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from "react";
-import { TouchableOpacity, Text, View, Switch, Animated, TouchableWithoutFeedback, Image } from "react-native";
-import { commonStyles, darkStyles, lightStyles } from "../styles/commonStyles";
+import { TouchableOpacity, View, Switch, Animated, TouchableWithoutFeedback, Image } from "react-native";
+import { commonStyles } from "../styles/commonStyles";
+
+import { Button } from 'react-native-paper';
+import { Text, Title, Subheading, Paragraph, Headline, Caption } from 'react-native-paper';
 
 import { useDispatch, useSelector } from 'react-redux';
 import { logOutAction } from '../redux/ducks/blogAuth';
@@ -8,6 +11,7 @@ import { changeModeAction } from '../redux/ducks/accountPref';
 
 export default function AccountScreen({ navigation }) {
   const isDark = useSelector(state => state.account.isDark);
+  const [isDarkMode, setIsDarkMode] = useState(isDark);
 
   const username = useSelector(state => state.account.username);
   const nickname = useSelector(state => state.account.nickname);
@@ -15,10 +19,6 @@ export default function AccountScreen({ navigation }) {
   const createdAt = useSelector(state => state.account.createdAt);
 
   const dispatch = useDispatch();
-
-  const [isDarkMode, setIsDarkMode] = useState(isDark);
-
-  const styles = { ...commonStyles, ...(isDark ? darkStyles : lightStyles) };
 
   const picSize = new Animated.Value(0);
   const sizeInterpolation = {
@@ -47,8 +47,8 @@ export default function AccountScreen({ navigation }) {
   }
 
   return (
-    <View style={[styles.container, { justifyContent: "center", alignItems: "center" }]}>
-      <Text style={[styles.title, styles.text, {marginTop: 20, marginBottom: 20}]}> Hello {nickname}!</Text>
+    <View style={commonStyles.centeredContainer}>
+      <Headline style={{marginTop: 20, marginBottom: 20}}> Hello {nickname}!</Headline>
       <View style={{width: 320, height: 320, alignItems: "center", justifyContent: "center"}}>
         {profilePic == "" ? (<View />) : (
           <TouchableOpacity onPress={changePicSize}>
@@ -56,10 +56,17 @@ export default function AccountScreen({ navigation }) {
           </TouchableOpacity>
         )}
       </View>
-      <Text style={[styles.text, {fontSize: 20, marginBottom: 20}]}>Username: {username}</Text>
-      <Text style={[styles.text, {marginBottom: 20}]}>Member Since: {createdAt}</Text>
-      <View style={{flexDirection: "row", marginTop: 20, alignItems: "center", marginBottom: 30}}>
-        <Text style={[styles.text, {marginRight: 10}]}>Dark Mode?</Text>
+      <View style={{alignItems: "flex-start", marginBottom: 40}}>
+        <Title>Username: 
+          <Subheading>{"  " + username}</Subheading>
+        </Title>
+        <Title>Member Since: 
+          <Subheading>{"  " + createdAt}</Subheading>
+        </Title>
+      </View>
+      
+      <View style={{flexDirection: "row", alignItems: "center", marginBottom: 40}}>
+        <Text style={[ {marginRight: 10}]}>Dark Mode?</Text>
         <Switch
           trackColor={{ false: "#767577", true: "#81b0ff" }}
           thumbColor={isDarkMode ? "#f5dd4b" : "#f4f3f4"}
@@ -69,9 +76,7 @@ export default function AccountScreen({ navigation }) {
         />
       </View>
 
-      <TouchableOpacity onPress={signOut} style={styles.button}>
-        <Text style={styles.buttonText}>Log out</Text>
-      </TouchableOpacity>
+      <Button mode="contained" onPress={signOut}>Log out</Button>
     </View>
   );
 }

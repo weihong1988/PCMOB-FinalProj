@@ -1,28 +1,24 @@
 import React, { useState, useEffect } from "react";
-import { ActivityIndicator, View, Text, StyleSheet, TextInput, TouchableOpacity, Keyboard, ScrollView, Image } from "react-native";
+import { View, TouchableOpacity, Keyboard, ScrollView, Image } from "react-native";
 import * as ImagePicker from 'expo-image-picker';
 import * as ImageManipulator from 'expo-image-manipulator';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
-import { Chip } from 'react-native-paper';
+import { ActivityIndicator, Chip, Button, HelperText, TextInput } from 'react-native-paper';
+import { Text, Title, Subheading, Paragraph, Headline, Caption } from 'react-native-paper';
 
 import {GOOGLEAPI_URL, GOOGLEAPI_KEY} from "../secrets/keys";
 import { API, API_CREATE, API_ONEPOST, API_IMAGE_URL } from "../constants/API";
 import axios from 'axios';
 
-import TextInputWithError from "../components/TextInputWithError";
 import PhotoPickerWithError from "../components/PhotoPickerWithError";
 
-import { commonStyles, darkStyles, lightStyles } from "../styles/commonStyles";
+import { commonStyles } from "../styles/commonStyles";
 import { useDispatch, useSelector } from 'react-redux';
 import { logOutAction } from '../redux/ducks/blogAuth';
 
 export default function CreateEditScreen({ route, navigation }) {
   const token = useSelector(state => state.auth.token);
-
-  const isDark = useSelector(state => state.account.isDark);
-  const styles = { ...commonStyles, ...isDark ? darkStyles : lightStyles };
-
   const postID = route.params.post_id;
 
   const nickname = useSelector(state => state.account.nickname);
@@ -30,11 +26,11 @@ export default function CreateEditScreen({ route, navigation }) {
 
   const [origImageURL, setOrigImageURL] = useState("");
 
-  const [Title, setTitle] = useState("");
-  const [TitleError, setTitleError] = React.useState("");
+  const [postTitle, setPostTitle] = useState("");
+  const [PostTitleError, setPostTitleError] = useState("");
 
   const [imageData, setImageData] = useState(null);
-  const [imageDataError, setImageDataError] = React.useState("");
+  const [imageDataError, setImageDataError] = useState("");
 
   const [Description, setDescription] = useState("");
 
@@ -43,6 +39,7 @@ export default function CreateEditScreen({ route, navigation }) {
   const [isLoading, setIsLoading] = useState(false);
 
   const [GoogleImageTags, setGoogleImageTags] = useState(null);
+  const [customImageTags, setCustomImageTags] = useState("");
   const [isGoogleUpload, setIsGoogleUpload] = useState(false);
   const [isGoogleDone, setIsGoogleDone] = useState(false);
 
@@ -72,7 +69,7 @@ export default function CreateEditScreen({ route, navigation }) {
   {
     const FormattedImage = await ImageManipulator.manipulateAsync(
       imageURI,
-      [{resize: { width: 1000 }}, { rotate: doRotate ? 90 : 0 }],
+      [{resize: { width: 1000 }}, { rotate: doRotate ? -90 : 0 }],
       {compress: 0.9, base64: true}
     );
 
@@ -118,7 +115,7 @@ export default function CreateEditScreen({ route, navigation }) {
         headers: { Authorization: `JWT ${token}` },
       })
 
-      setTitle(response.data.title);
+      setPostTitle(response.data.title);
       setDescription(response.data.description);
       setOrigImageURL(API_IMAGE_URL + response.data.image);
 
@@ -128,7 +125,7 @@ export default function CreateEditScreen({ route, navigation }) {
       setIsLoading(false);
       console.log(error);
 
-      if (error.response.data.error = "Invalid token") {
+      if (error.response.data.error == "Invalid token") {
         dispatch({...logOutAction()})
         navigation.navigate("SignInSignUp");
       }
@@ -139,12 +136,12 @@ export default function CreateEditScreen({ route, navigation }) {
     var ErrorFound = false;
     Keyboard.dismiss();
 
-    if (Title == "") {
-      setTitleError("Title cannot be blank");
+    if (postTitle == "") {
+      setPostTitleError("Title cannot be blank");
       ErrorFound = true;
     }
     else
-      setTitleError("");
+      setPostTitleError("");
 
     if (imageData == null) {
       setImageDataError("Post Image cannot be blank");
@@ -158,7 +155,7 @@ export default function CreateEditScreen({ route, navigation }) {
 
       try {
         var response = await axios.post(API + API_CREATE, {
-          Title,
+          postTitle,
           imageData,
           Description,
           ExifData,
@@ -175,7 +172,7 @@ export default function CreateEditScreen({ route, navigation }) {
         setIsLoading(false);
         console.log(error);
 
-        if (error.response.data.error = "Invalid token") {
+        if (error.response.data.error == "Invalid token") {
           dispatch({...logOutAction()})
           navigation.navigate("SignInSignUp");
         }
@@ -197,7 +194,7 @@ export default function CreateEditScreen({ route, navigation }) {
       setIsLoading(false);
       console.log(error);
 
-      if (error.response.data.error = "Invalid token") {
+      if (error.response.data.error == "Invalid token") {
         dispatch({...logOutAction()})
         navigation.navigate("SignInSignUp");
       }
@@ -207,19 +204,19 @@ export default function CreateEditScreen({ route, navigation }) {
   async function editPost(id) {
     Keyboard.dismiss();
 
-    if (Title == "") {
-      setTitleError("Title cannot be blank");
+    if (postTitle == "") {
+      setPostTitleError("Title cannot be blank");
       return;
     }
     else
-      setTitleError("");
+      setPostTitleError("");
 
     setIsLoading(true);
 
     try {
       if (imageData == null) {
         const response = await axios.put(API + API_ONEPOST + "/" + id, {
-          Title,
+          postTitle,
           Description,
         }, 
         {
@@ -228,7 +225,7 @@ export default function CreateEditScreen({ route, navigation }) {
       }
       else {
         const response = await axios.put(API + API_ONEPOST + "/" + id, {
-          Title,
+          postTitle,
           imageData,
           Description,
           ExifData,
@@ -246,23 +243,44 @@ export default function CreateEditScreen({ route, navigation }) {
       setIsLoading(false);
       console.log(error);
 
-      if (error.response.data.error = "Invalid token") {
+      if (error.response.data.error == "Invalid token") {
         dispatch({...logOutAction()})
         navigation.navigate("SignInSignUp");
       }
     }
   }
 
-  function MapImageTags(GoogleImageTags) {
-    if (GoogleImageTags) {
-      return GoogleImageTags.map((data, index) => {
+  function MapImageTags(ImageTags) {
+    if (ImageTags) {
+      return ImageTags.map((data, index) => {
         return (
-          <Chip icon="tag" key={index} style={{marginRight: 5, marginBottom: 10}}>{data.description}</Chip>
+          <Chip 
+            icon="tag" 
+            key={data.description} 
+            mode="outlined" 
+            onClose={() => setGoogleImageTags(GoogleImageTags.filter(d => d.description !== data.description))} 
+            style={{marginRight: 5, marginBottom: 10}}
+          >
+            {data.description}
+          </Chip>
         )
       }) 
     }
     else
       return null;
+  }
+
+  function AddCustomImageTag() {
+    if (customImageTags) {
+      let NewItem = {
+        description: customImageTags,
+        score: 1.0,
+        topicality: 1.0,
+      }
+
+      GoogleImageTags.push(NewItem);
+      setCustomImageTags("");
+    }
   }
 
   async function submitToGoogleAPI(imageString) {
@@ -278,57 +296,58 @@ export default function CreateEditScreen({ route, navigation }) {
     setIsGoogleUpload(true);
 
     try {
-      // const response = await axios.post(GOOGLEAPI_URL + GOOGLEAPI_KEY, {
-      //   requests
-      // }, 
-      // {
-      //   headers: { 
-      //     Accept: "application/json",
-      //     "Content-Type": "application/json"
-      //   },
-      // });
+      // const testdata = {
+      //   responses: [{
+      //     labelAnnotations: [{
+      //       description: "Sky",
+      //       mid: "/m/01bqvp",
+      //       score: 0.9747512,
+      //       topicality: 0.9747512,
+      //     },
+      //     {
+      //       description: "Building",
+      //       mid: "/m/0cgh4",
+      //       score: 0.9708724,
+      //       topicality: 0.9708724,
+      //     },
+      //     {
+      //       description: "Skyscraper",
+      //       mid: "/m/079cl",
+      //       score: 0.96657646,
+      //       topicality: 0.96657646,
+      //     },
+      //     {
+      //       description: "Daytime",
+      //       mid: "/m/02q7ylj",
+      //       score: 0.9478813,
+      //       topicality: 0.9478813,
+      //     },
+      //     {
+      //       description: "Street light",
+      //       mid: "/m/033rq4",
+      //       score: 0.90216017,
+      //       topicality: 0.90216017,
+      //         },
+      //       ],
+      //     },
+      //   ],
+      // }
 
-      const testdata = {
-        responses: [{
-          labelAnnotations: [{
-            description: "Sky",
-            mid: "/m/01bqvp",
-            score: 0.9747512,
-            topicality: 0.9747512,
-          },
-          {
-            description: "Building",
-            mid: "/m/0cgh4",
-            score: 0.9708724,
-            topicality: 0.9708724,
-          },
-          {
-            description: "Skyscraper",
-            mid: "/m/079cl",
-            score: 0.96657646,
-            topicality: 0.96657646,
-          },
-          {
-            description: "Daytime",
-            mid: "/m/02q7ylj",
-            score: 0.9478813,
-            topicality: 0.9478813,
-          },
-          {
-            description: "Street light",
-            mid: "/m/033rq4",
-            score: 0.90216017,
-            topicality: 0.90216017,
-              },
-            ],
-          },
-        ],
-      }
+      const response = await axios.post(GOOGLEAPI_URL + GOOGLEAPI_KEY, {
+        requests
+      }, 
+      {
+        headers: { 
+          Accept: "application/json",
+          "Content-Type": "application/json"
+        },
+      });
 
       setIsGoogleUpload(false);
       setIsGoogleDone(true);
 
-      setGoogleImageTags(testdata.responses[0].labelAnnotations);
+      //setGoogleImageTags(testdata.responses[0].labelAnnotations);
+      setGoogleImageTags(response.data.responses[0].labelAnnotations);
     }
     catch (error) {
       setIsGoogleUpload(false);
@@ -337,61 +356,61 @@ export default function CreateEditScreen({ route, navigation }) {
   }
 
   return (
-    <View style={styles.container}>
+    <View style={commonStyles.container}>
       {isLoading ? (
-          <View style={{flex: 1, justifyContent: "center", alignItems: "center"}}>
-            <ActivityIndicator size="large" color="#0000ff" />
+          <View style={commonStyles.centeredContainer}>
+            <ActivityIndicator size="large" />
           </View>
         ) : (
-          <ScrollView style={{margin: 20}} contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', alignItems: 'flex-start' }}>
-            <View style={{flexDirection: "row", alignItems: "center", alignSelf: "center", marginBottom: 30,}}>
+          <ScrollView style={{marginHorizontal: 20, marginVertical: 10}} contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', alignItems: 'flex-start' }}>
+            <View style={{flexDirection: "row", alignItems: "center", marginBottom: 10,}}>
               {profilePic == "" ? (<View />) : (<Image source={{ uri: profilePic }} style={{ width: 80, height: 80 }} borderRadius={50} />)}
               <View style={{marginLeft: 10, alignItems: "flex-start"}}>
-                <Text style={[styles.title, styles.text, {fontSize: 28}]}>{nickname},</Text>
-                <Text style={[styles.title, styles.text, {fontSize: 28}]}>{postID ? "Changed your mind?" : "What's on your mind?"}</Text>
+                <Title style={{fontSize: 28, marginBottom: 10}}>{nickname},</Title>
+                <Subheading style={[{fontSize: 22}]}>{postID ? "Changed your mind?" : "What's on your mind?"}</Subheading>
               </View>
             </View>
 
-            <Text style={[additionalStyles.label, styles.text]}>Post Title</Text>
-            <TextInputWithError width="100%" center={false} isDark={isDark} placeholder="Title" secureTextEntry={false} autoCapitalize={true} value={Title} setData={setTitle} ErrorText={TitleError}/>
-            
-            <Text style={[additionalStyles.label, styles.text]}>Post Image</Text>
-            <PhotoPickerWithError postPic={true} isDark={isDark} imageData={imageData} origImageURL={origImageURL} LaunchGallery={LaunchGallery} LaunchCamera={LaunchCamera} ErrorText={imageDataError} />
+            <TextInput mode="outlined" style={[commonStyles.titleInput, {width: "100%"}]} label="Title" error={PostTitleError ? true : false} autoCapitalize="sentences" value={postTitle} onChangeText={data => setPostTitle(data)} />
+            <HelperText type="error" visible={PostTitleError ? true : false}>{PostTitleError}</HelperText>
 
-            <Text style={[additionalStyles.label, styles.text]}>Image Tags</Text>
-            <View style={{flexDirection: "row", width: "100%", justifyContent: "space-between", marginBottom: 10}}>
-              <View style={{flexDirection: "row", flexWrap: "wrap"}}>
-                {MapImageTags(GoogleImageTags)}
-              </View>
+            <PhotoPickerWithError postPic={true} imageData={imageData} origImageURL={origImageURL} LaunchGallery={LaunchGallery} LaunchCamera={LaunchCamera} ErrorText={imageDataError} />
 
-              {isGoogleDone ? <View /> : (
-                isGoogleUpload ? (<ActivityIndicator size="large" color="#0000ff" style={{marginRight: 20}} />) : (
-                  <TouchableOpacity onPress={() => imageData ? submitToGoogleAPI(imageData) : null} style={styles.button}>
-                    <Text style={styles.buttonText}>Auto Tag</Text>
-                  </TouchableOpacity>
-                )
-              )}             
+            <View style={{flexDirection: "row", flexWrap: "wrap", width: "100%"}}>
+              {MapImageTags(GoogleImageTags)}
             </View>
 
-            <Text style={[additionalStyles.label, styles.text]}>Post Description</Text>
-            <View style={[styles.inputView, {height: 100, marginBottom: 20}]}>
-              <TextInput
-                style={[styles.textInput, {height: 100}]}
-                multiline={true}
-                textAlignVertical="top"
-                autoCapitalize="sentences"
-                autoCorrect={true}
-                placeholder="Optional Description"
-                placeholderTextColor="#003f5c"
-                value={Description}
-                onChangeText={(text) => setDescription(text)}
+            <View style={{flexDirection: "row", width: "100%", justifyContent: "space-between", alignItems: "center", marginBottom: 20}}>
+              <TextInput 
+                mode="outlined" 
+                style={[commonStyles.textInput, {width: "60%" }]} 
+                label="Add Image Tags" 
+                autoCapitalize="sentences" 
+                value={customImageTags} 
+                onChangeText={data => setCustomImageTags(data)} 
+                right={<TextInput.Icon name="tag-plus" onPress={AddCustomImageTag} forceTextInputFocus={false} />}
               />
+
+              { isGoogleUpload ? (<ActivityIndicator size="large" style={{marginRight: 20}} />) : (
+                  <Button mode="contained" disabled={isGoogleDone ? true: false} onPress={() => imageData ? submitToGoogleAPI(imageData) : null}>Auto Tag</Button>
+              )}
             </View>
 
-            <View style={{flexDirection: "row", justifyContent: "space-between", width: "100%"}}>
-              <TouchableOpacity onPress={() => postID ? editPost(postID) : submitPost()} style={styles.button}>
-                <Text style={styles.buttonText}>{postID ? "Edit" : "Submit"}</Text>
-              </TouchableOpacity>
+            <TextInput 
+              mode="outlined" 
+              style={[commonStyles.descInput, {width: "100%"}]} 
+              multiline={true}
+              numberOfLines={4}
+              textAlignVertical="top"
+              label="Description (Optional)" 
+              autoCapitalize="sentences" 
+              autoCorrect={true}
+              value={Description} 
+              onChangeText={data => setDescription(data)} 
+            />
+
+            <View style={{flexDirection: "row", justifyContent: "space-between", alignItems: "center", width: "100%", marginTop: 20}}>
+              <Button mode="contained" onPress={() => postID ? editPost(postID) : submitPost()}>{postID ? "Edit" : "Submit"}</Button>
 
               {postID ? (
                 <TouchableOpacity onPress={() => deletePost(postID)}>
@@ -407,10 +426,3 @@ export default function CreateEditScreen({ route, navigation }) {
     </View>
   )
 }
-
-const additionalStyles = StyleSheet.create({
-  label: {
-    fontSize: 18,
-    marginBottom: 10,
-  }
-});

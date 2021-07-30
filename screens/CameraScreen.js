@@ -4,15 +4,14 @@ import { Camera } from 'expo-camera';
 import * as Location from 'expo-location';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
-import { commonStyles, darkStyles, lightStyles } from "../styles/commonStyles";
-import { useDispatch, useSelector } from 'react-redux';
+import { useTheme } from 'react-native-paper';
+import { commonStyles } from "../styles/commonStyles";
+import { color } from 'react-native-reanimated';
 
 export default function CameraScreen({ route, navigation }) {
   const returnScreen = route.params.returnScreen;
+  const { colors } = useTheme();
 
-  const isDark = useSelector(state => state.account.isDark);
-  const styles = { ...commonStyles, ...isDark ? darkStyles : lightStyles };
-  
   const [hasPermission, setHasPermission] = useState(null);
   const [cameraType, setCameraType] = useState(Camera.Constants.Type.back);
 
@@ -48,7 +47,7 @@ export default function CameraScreen({ route, navigation }) {
     navigation.setOptions({
       headerRight: () => (
         <TouchableOpacity onPress={() => {setCameraType(cameraType === Camera.Constants.Type.back ? Camera.Constants.Type.front : Camera.Constants.Type.back);}}>
-          <MaterialCommunityIcons name="autorenew" size={24} style={{ color: styles.headerTint, marginRight: 15 }} />
+          <MaterialCommunityIcons name="autorenew" size={24} style={{ color: colors.primary, marginRight: 15 }} />
         </TouchableOpacity>
       ),
     });
@@ -68,12 +67,12 @@ export default function CameraScreen({ route, navigation }) {
   }
 
   return (
-    <View style={[styles.container, {justifyContent: "center"}]}>
+    <View style={commonStyles.centeredContainer}>
       <Camera style={additionalStyles.camera} type={cameraType} ref={cameraRef} ratio={"1:1"} />    
       <View style={additionalStyles.innerView}>
         <View style={additionalStyles.buttonView}>
           <TouchableOpacity
-            style={[additionalStyles.circleButton, {backgroundColor: isDark ? "black" : "white", borderWidth: 3, borderColor: isDark ? "lightgray" : "darkgray"}]}
+            style={[additionalStyles.circleButton, {backgroundColor: colors.primary, borderWidth: 3, borderColor: colors.placeholder}]}
             onPress={() => {takePicture()}}>
             </TouchableOpacity>
         </View>

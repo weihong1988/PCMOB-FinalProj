@@ -1,28 +1,22 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, View, Text, TouchableOpacity, UIManager, LayoutAnimation, ActivityIndicator, Keyboard, ScrollView } from 'react-native';
+import { StyleSheet, View, TouchableOpacity, Keyboard, ScrollView } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import * as ImageManipulator from 'expo-image-manipulator';
+import { HelperText, TextInput, Button } from 'react-native-paper';
+import { ActivityIndicator, Text, Title, Subheading, Paragraph, Headline, Caption } from 'react-native-paper';
 
 import { API, API_LOGIN, API_SIGNUP, API_WHOAMI, API_IMAGE_URL } from '../constants/API';
 import axios from 'axios';
 
-import TextInputWithError from "../components/TextInputWithError";
 import PhotoPickerWithError from "../components/PhotoPickerWithError";
 
-import { commonStyles, darkStyles, lightStyles } from "../styles/commonStyles";
+import { commonStyles} from "../styles/commonStyles";
 import { useDispatch, useSelector } from 'react-redux';
 
 import { logInAction, logOutAction } from '../redux/ducks/blogAuth';
 import { uploadUserIDAction, uploadUsernameAction, uploadNicknameAction, uploadProfilePicAction, uploadCreatedAtAction } from '../redux/ducks/accountPref';
 
-if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
-  UIManager.setLayoutAnimationEnabledExperimental(true);
-} //Needs to be manually enabled for android
-
 export default function SignInSignUpScreen({ route, navigation }) {
-  const isDark = useSelector(state => state.account.isDark);
-  const styles = { ...commonStyles, ...(isDark ? darkStyles : lightStyles) };
-
   const [isLogIn, setIsLogIn] = useState(true);
 
   const [username, setUsername] = useState("");
@@ -32,7 +26,10 @@ export default function SignInSignUpScreen({ route, navigation }) {
   const [passwordError, setPasswordError] = useState("");
 
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [confirmPasswordError, setConfirmPasswordError] = useState('')
+  const [confirmPasswordError, setConfirmPasswordError] = useState("")
+
+  const [phoneNo, setPhoneNo] = useState("");
+  const [phoneNoError, setPhoneNoError] = useState("")
 
   const [nickname, setNickname] = useState("");
   const [nicknameError, setNicknameError] = React.useState("");
@@ -57,7 +54,7 @@ export default function SignInSignUpScreen({ route, navigation }) {
   {
     const FormattedImage = await ImageManipulator.manipulateAsync(
       imageURI,
-      [{resize: { width: 1000 }}, { rotate: doRotate ? 90 : 0 }],
+      [{resize: { width: 1000 }}, { rotate: doRotate ? -90 : 0 }],
       {compress: 0.9, base64: true}
     );
 
@@ -89,12 +86,6 @@ export default function SignInSignUpScreen({ route, navigation }) {
   }, [route.params?.imageURI]);
 
   function switchSignInSignUp() {
-    LayoutAnimation.configureNext({
-      duration: 1200,
-      create: { type: 'linear', property: 'opacity' },
-      update: { type: 'spring', springDamping: 0.3 }
-    });
-
     setIsLogIn(!isLogIn);
   }
 
@@ -253,48 +244,51 @@ export default function SignInSignUpScreen({ route, navigation }) {
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[commonStyles.container, {paddingTop: 30}]}>
       <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <Text style={[styles.headerTitle, additionalStyles.title]}>{isLogIn ? "Log In" : "Sign Up"}</Text>
+        <Headline style={commonStyles.pageTitle}>{isLogIn ? "Log In" : "Sign Up"}</Headline>
 
-        <TextInputWithError width="70%" center={true} isDark={isDark} placeholder="Username" secureTextEntry={false} autoCapitalize={false} value={username} setData={setUsername} ErrorText={usernameError}/>
-        <TextInputWithError width="70%" center={true} isDark={isDark} placeholder="Password" secureTextEntry={true} autoCapitalize={false} value={password} setData={setPassword} ErrorText={passwordError}/>
-      
+        <TextInput mode="outlined" style={[commonStyles.textInput, {width: "70%"}]} label="Username" error={usernameError ? true : false} secureTextEntry={false} autoCapitalize="none" value={username} onChangeText={data => setUsername(data)} />
+        <HelperText type="error" visible={usernameError ? true : false}>{usernameError}</HelperText>
+
+        <TextInput mode="outlined" style={[commonStyles.textInput, {width: "70%"}]} label="Password" error={passwordError ? true : false} secureTextEntry={true} autoCapitalize="none" value={password} onChangeText={data => setPassword(data)} />
+        <HelperText type="error" visible={passwordError ? true : false}>{passwordError}</HelperText>
+
         {isLogIn ? (<View />) : (
           <View style={{width: "100%", alignItems: 'center'}}>
-            <TextInputWithError width="70%" center={true} isDark={isDark} placeholder="Confirm Password" secureTextEntry={true} autoCapitalize={false} value={confirmPassword} setData={setConfirmPassword} ErrorText={confirmPasswordError}/>
-            <TextInputWithError width="70%" center={true} isDark={isDark} placeholder="Display Name" secureTextEntry={false} autoCapitalize={true} value={nickname} setData={setNickname} ErrorText={nicknameError}/>
-            <PhotoPickerWithError postPic={false} isDark={isDark} imageData={imageData} LaunchGallery={LaunchGallery} LaunchCamera={LaunchCamera} ErrorText={ProfilePicError} />
+            <TextInput mode="outlined" style={[commonStyles.textInput, {width: "70%"}]} label="Confirm Password" error={confirmPasswordError ? true : false} secureTextEntry={true} autoCapitalize="none" value={confirmPassword} onChangeText={data => setConfirmPassword(data)} />
+            <HelperText type="error" visible={confirmPasswordError ? true : false}>{confirmPasswordError}</HelperText>
+
+            <TextInput mode="outlined" style={[commonStyles.textInput, {width: "70%"}]} label="Phone Number" error={phoneNoError ? true : false} keyboardType="number-pad" value={phoneNo} onChangeText={data => setPhoneNo(data)} />
+            <HelperText type="error" visible={phoneNoError ? true : false}>{phoneNoError}</HelperText>
+
+            <TextInput mode="outlined" style={[commonStyles.textInput, {width: "70%"}]} label="Display Name" error={nicknameError ? true : false} secureTextEntry={false} autoCapitalize="sentences" value={nickname} onChangeText={data => setNickname(data)} />
+            <HelperText type="error" visible={nicknameError ? true : false}>{nicknameError}</HelperText>
+
+            <PhotoPickerWithError postPic={false} imageData={imageData} LaunchGallery={LaunchGallery} LaunchCamera={LaunchCamera} ErrorText={ProfilePicError} />
           </View>
                     
         )}
-        <View style={{flexDirection: "row", justifyContent: 'center'}}>
-          <TouchableOpacity style={styles.button} onPress={isLogIn ? DoLogIn : DoSignUp}>
-            <Text style={styles.buttonText}>{isLogIn ? "Log In" : "Sign Up"}</Text>
-          </TouchableOpacity>
-          {loading ? <ActivityIndicator style={{ marginLeft: 10 }} size="large" color="#0000ff"/> : <View/>}
+        <View style={{flexDirection: "row", justifyContent: 'center', marginTop: 20}}>
+          <Button mode="contained" onPress={isLogIn ? DoLogIn : DoSignUp}>{isLogIn ? "Log In" : "Sign Up"}</Button>
+          {loading ? <ActivityIndicator style={{ marginLeft: 20 }} size="small" /> : <View/>}
         </View>
 
         <TouchableOpacity onPress={switchSignInSignUp}>
           <Text style={additionalStyles.switchText}>{isLogIn ? "No account? Sign up now" : "Already have an account? Log in here."}</Text>
         </TouchableOpacity>
 
-        <Text style={styles.errorText}>{errorText}</Text>
+        <Text style={commonStyles.errorText}>{errorText}</Text>
       </ScrollView>
     </View>
   );
 }
 
 const additionalStyles = StyleSheet.create({
-  title: {
-    fontWeight: 'bold',
-    fontSize: 40, 
-    margin: 20
-  },
   switchText: {
     fontWeight: '400',
-    fontSize: 20, 
-    marginTop: 20,
-    color: "blue"
+    fontSize: 18, 
+    marginTop: 10,
+    color: "dodgerblue"
   },
 });

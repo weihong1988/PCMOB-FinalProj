@@ -1,22 +1,22 @@
 import React, { useState, useEffect, useRef } from "react";
-import { ActivityIndicator, View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Image, Dimensions } from "react-native";
+import { View, TouchableOpacity, ScrollView, Image, Dimensions } from "react-native";
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import  MapView, { Marker } from 'react-native-maps';
 
-import { Chip } from 'react-native-paper';
+import { ActivityIndicator, Chip, Button, HelperText, TextInput, Card } from 'react-native-paper';
+import { Text, Title, Subheading, Paragraph, Headline, Caption } from 'react-native-paper';
+import { useTheme } from 'react-native-paper';
 
 import { API, API_COMMENT, API_ONEPOST, API_IMAGE_URL } from "../constants/API";
 import axios from 'axios';
 
-import { commonStyles, darkStyles, lightStyles } from "../styles/commonStyles";
+import { commonStyles } from "../styles/commonStyles";
 import { useDispatch, useSelector } from 'react-redux';
 import { logOutAction } from '../redux/ducks/blogAuth';
 
 export default function ShowScreen({ navigation, route }) {
   const token = useSelector(state => state.auth.token);
-
-  const isDark = useSelector(state => state.account.isDark);
-  const styles = { ...commonStyles, ...isDark ? darkStyles : lightStyles };
+  const { colors } = useTheme();
 
   var loggedInUserID = useSelector(state => state.account.user_id);
 
@@ -43,7 +43,7 @@ export default function ShowScreen({ navigation, route }) {
       {
         headerRight: () => (
           <TouchableOpacity onPress={() => navigation.navigate("CreateEdit", { title: "Edit Post", post_id: postID }) }>
-            <MaterialCommunityIcons name="square-edit-outline" size={48} style={{ color: styles.headerTint, marginRight: 20 }} />
+            <MaterialCommunityIcons name="square-edit-outline" size={48} style={{ color: colors.primary, marginRight: 20 }} />
           </TouchableOpacity>
         ),
       }
@@ -76,7 +76,7 @@ export default function ShowScreen({ navigation, route }) {
       setIsLoading(false);
       console.log(error);
 
-      if (error.response.data.error = "Invalid token") {
+      if (error.response.data.error == "Invalid token") {
         dispatch({...logOutAction()})
         navigation.navigate("SignInSignUp");
       }
@@ -109,7 +109,7 @@ export default function ShowScreen({ navigation, route }) {
       setIsLoading(false);
       console.log(error);
 
-      if (error.response.data.error = "Invalid token") {
+      if (error.response.data.error == "Invalid token") {
         dispatch({...logOutAction()})
         navigation.navigate("SignInSignUp");
       }
@@ -119,11 +119,11 @@ export default function ShowScreen({ navigation, route }) {
   function MapComments() {
     return allUserComments.map((data) => {
       return (
-        <View style={{flexDirection: "row", width: "100%", marginTop: 10, paddingVertical: 10, borderTopWidth: 1, borderColor: isDark ? "#f4d47c" : "#f55" }} key={data.id}>
+        <View style={{flexDirection: "row", width: "100%", marginTop: 10, paddingVertical: 10, borderTopWidth: 2, borderColor: colors.placeholder }} key={data.id}>
           <Image source={{ uri: API_IMAGE_URL + data.createdUserObject.profilePic }} style={{ width: 50, height: 50 }} borderRadius={40} />
           <View style={{flexGrow: 1, marginLeft: 10}}>
-            <Text style={[styles.text, {fontSize: 18, fontWeight: "bold"}]}>{data.createdUserObject.nickname}</Text>
-            <Text style={styles.text}>{data.comment}</Text>
+            <Title>{data.createdUserObject.nickname}</Title>
+            <Text>{data.comment}</Text>
           </View>
         </View>
       )
@@ -134,7 +134,7 @@ export default function ShowScreen({ navigation, route }) {
     if (GoogleImageTags) {
       return GoogleImageTags.map((data, index) => {
         return (
-          <Chip icon="tag" key={index} style={{marginRight: 5, marginBottom: 10}}>{data.tag}</Chip>
+          <Chip icon="tag" key={index} mode="outlined" style={{marginRight: 5, marginBottom: 10}}>{data.tag}</Chip>
         )
       }) 
     }
@@ -153,92 +153,92 @@ export default function ShowScreen({ navigation, route }) {
   }, [])
   
   return (
-    <View style={styles.container}>
+    <View style={commonStyles.container}>
       { isLoading ? (
-          <View style={{flex: 1, justifyContent: "center", alignItems: "center"}}>
-            <ActivityIndicator size="large" color="#0000ff" />
+          <View style={commonStyles.centeredContainer}>
+            <ActivityIndicator size="large" />
           </View>
         ) : (
           <ScrollView style={{margin: 20}} contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', alignItems: 'flex-start' }}>
             <View style={{flexDirection: "row", alignItems: "center", marginBottom: 10,}}>
               <Image source={{ uri: API_IMAGE_URL + post?.createdUserObject.profilePic }} style={{ width: 80, height: 80 }} borderRadius={40} />
               <View style={{marginLeft: 20, alignItems: "flex-start"}}>
-                <Text style={[styles.title, styles.text]}>{post?.createdUserObject.nickname}</Text>
-                <Text style={{fontSize: 16, color: isDark ? "lightgrey" : "grey"}}>Posted on: {new Date(post.createdAt * 1000).toDateString() + ' ' + new Date(post.createdAt * 1000).toLocaleTimeString('en-US')}</Text>
+                <Title style={{fontSize: 28, marginBottom: 10}}>{post?.createdUserObject.nickname}</Title>
+                <Caption style={{fontSize: 14}}>Posted on: {new Date(post.createdAt * 1000).toDateString() + ' ' + new Date(post.createdAt * 1000).toLocaleTimeString('en-US')}</Caption>
               </View>           
             </View>
 
-            <Text style={[styles.title, styles.text, {textDecorationLine: "underline", marginVertical: 5}]}>{post.title}</Text>
+            <Headline style={{textDecorationLine: "underline", marginVertical: 5}}>{post.title}</Headline>
             <Image source={{ uri: API_IMAGE_URL + post.image }} style={{ width: screenWidth, height: screenWidth, marginVertical: 5 }} resizeMode="contain" />
             
+            {post.description ? (<Paragraph>{post.description}</Paragraph>) : <View />}
+
             {GoogleImageTags ? (
               <View style={{flexDirection: "row", flexWrap: "wrap", marginVertical: 10}}>
                 {MapImageTags(GoogleImageTags)}
               </View>
             ) : (<View />)}
-            
-            <View style={[styles.textContainerView, { marginVertical: 5}]}>
-              <Text>{post.description}</Text>
-            </View>
 
             {ExifData?.GPSLatitude && ExifData?.GPSLongitude ? (
-              <View style={{width: "100%"}}>
-                <Text style={[styles.text, {fontSize: 18, textDecorationLine: "underline", marginTop: 20, marginBottom: 5}]}>Geolocation Tags</Text>
-                <MapView 
-                  style={{width: "100%", height: 220, marginVertical: 5}} 
-                  initialRegion={{
-                    latitude: ExifData.GPSLatitude,
-                    longitude: ExifData.GPSLongitude,
-                    latitudeDelta: 0.005,
-                    longitudeDelta: 0.0025,
-                  }}
-                  onLayout={() => { this.markerRef.showCallout(); }}
-                >
-                  <Marker
-                    ref={ref => { this.markerRef = ref; }}
-                    coordinate={{
+              <Card style={{width: "100%", marginBottom: 20, borderBottomWidth: 3, borderRightWidth: 3, borderColor: colors.placeholder}}>
+                <Card.Title title="Geolocation Tags" titleStyle={{textDecorationLine: "underline"}}/>
+                <Card.Content style={{marginBottom: 10}}>
+                  <MapView 
+                    style={{width: "100%", height: 220, marginVertical: 5}} 
+                    initialRegion={{
                       latitude: ExifData.GPSLatitude,
-                      longitude: ExifData.GPSLongitude
+                      longitude: ExifData.GPSLongitude,
+                      latitudeDelta: 0.005,
+                      longitudeDelta: 0.0025,
                     }}
-                    title={"Image Location"}
-                  />
-                </MapView>
-              </View>
+                    onLayout={() => { markerRef.current.showCallout(); }}
+                  >
+                    <Marker
+                      ref={markerRef}
+                      coordinate={{
+                        latitude: ExifData.GPSLatitude,
+                        longitude: ExifData.GPSLongitude
+                      }}
+                      title={"Photograph Location"}
+                    />
+                  </MapView>
+                </Card.Content>
+              </Card>
             ) : (
               <View />
             )
             }
             
-            <Text style={[styles.text, {fontSize: 18, textDecorationLine: "underline", marginTop: 20, marginBottom: 5}]}>EXIF Data</Text>
-            <View style={[styles.textContainerView, { marginVertical: 5}]}>
-              <Text>{
-                `Camera: ${ExifData.Make ? (capitalizeFirstLetter(ExifData.Make) + " " + ExifData.Model) : "-"}\nTaken on: ${ExifData.DateTime ? ExifData.DateTime : "-"}\n\n` +
-                `GPS Coords:  ${(ExifData.GPSLatitude && ExifData.GPSLongitude) ? (ExifData.GPSLatitude.toFixed(6) + ", " + ExifData.GPSLongitude?.toFixed(6)) : "-"}\n\n` +
-                `Shutter Speed: ${ExifData.ExposureTime ? (ExifData.ExposureTime + "s") : "-"}\nF-stop: ${ExifData.FNumber ? ExifData.FNumber : "-"}\nISO: ${ExifData.ISOSpeedRatings ? ExifData.ISOSpeedRatings : "-"}\nFlash fired: ${ExifData.Flash != undefined ? ExifData.Flash : "-"}`}
-              </Text>
-            </View>
+            <Card style={{width: "100%", borderBottomWidth: 3, borderRightWidth: 3, borderColor: colors.placeholder}}>
+              <Card.Title title="EXIF Data" titleStyle={{textDecorationLine: "underline"}}/>
+              <Card.Content style={{marginBottom: 10}}>
+                <Text>{
+                  `Camera: ${ExifData.Make ? (capitalizeFirstLetter(ExifData.Make) + " " + ExifData.Model) : "-"}\nTaken on: ${ExifData.DateTime ? ExifData.DateTime : "-"}\n\n` +
+                  `GPS Coords:  ${(ExifData.GPSLatitude && ExifData.GPSLongitude) ? (ExifData.GPSLatitude.toFixed(6) + ", " + ExifData.GPSLongitude?.toFixed(6)) : "-"}\n\n` +
+                  `Shutter Speed: ${ExifData.ExposureTime ? (ExifData.ExposureTime + "s") : "-"}\nF-stop: ${ExifData.FNumber ? ExifData.FNumber : "-"}\nISO: ${ExifData.ISOSpeedRatings ? ExifData.ISOSpeedRatings : "-"}\nFlash fired: ${ExifData.Flash != undefined ? ExifData.Flash : "-"}`}
+                </Text>
+              </Card.Content>
+            </Card>
 
-
-            <Text style={[styles.text, {fontSize: 18, textDecorationLine: "underline", marginTop: 20, marginBottom: 5}]}>User Comments</Text>
+            <Text style={[{fontSize: 18, textDecorationLine: "underline", marginTop: 20, marginBottom: 5}]}>User Comments</Text>
             <View style={{flexDirection: "row", width: "100%"}}>
               <Image source={{ uri: API_IMAGE_URL + post?.createdUserObject.profilePic }} style={{ width: 80, height: 80 }} borderRadius={40} />
               <View style={{flexGrow: 1, marginLeft: 10}}>
-                <View style={[styles.inputView, {height: 80, marginBottom: 10}]}>
-                  <TextInput
-                    style={[styles.textInput, {height: 80}]}
+                <View style={[{height: 80, marginBottom: 10}]}>
+                  <TextInput 
+                    mode="outlined" 
+                    style={{width: "100%"}} 
                     multiline={true}
+                    numberOfLines={4}
                     textAlignVertical="top"
-                    autoCapitalize="sentences"
+                    label="Your Comments" 
+                    autoCapitalize="sentences" 
                     autoCorrect={true}
-                    placeholder="Your Comments..."
-                    placeholderTextColor="#003f5c"
-                    value={Comment}
-                    onChangeText={(text) => setComment(text)}
+                    value={Comment} 
+                    onChangeText={data => setComment(data)} 
                   />
                 </View>
-                <TouchableOpacity onPress={() => addComment(postID)} style={[styles.button, {alignSelf: "flex-end"}]}>
-                  <Text style={[styles.buttonText, {fontSize: 16, marginVertical: 5}]}>Comment</Text>
-                </TouchableOpacity>
+                <Button mode="contained" style={{alignSelf: "flex-end"}} onPress={() => addComment(postID)}>Comment</Button>
               </View>
             </View>
 

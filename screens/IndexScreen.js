@@ -1,27 +1,28 @@
 import React, { useEffect, useState } from "react";
-import { Text, View, TouchableOpacity, FlatList, RefreshControl, ActivityIndicator, Dimensions, Image} from "react-native";
+import { View, TouchableOpacity, FlatList, RefreshControl, Dimensions, Image} from "react-native";
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+
+import { ActivityIndicator } from 'react-native-paper';
+import { useTheme } from 'react-native-paper';
 
 import { useDispatch, useSelector } from 'react-redux';
 import { logOutAction } from '../redux/ducks/blogAuth';
 
-import { commonStyles, darkStyles, lightStyles } from "../styles/commonStyles";
+import { commonStyles } from "../styles/commonStyles";
 
 import { API, API_MYPOSTS, API_IMAGE_URL } from "../constants/API";
 import axios from "axios";
 
 export default function IndexScreen({ navigation, route }) {
   const token = useSelector(state => state.auth.token);
-
-  const isDark = useSelector(state => state.account.isDark);
-  const styles = { ...commonStyles, ...isDark ? darkStyles : lightStyles };
+  const { colors } = useTheme();
 
   const [refreshing, setRefreshing] = React.useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
   const [postsArray, setPostsArray] = useState([]);
   
-  const screenWidth = Dimensions.get("window").width - 2*2;
+  const screenWidth = Dimensions.get("window").width - 4*2;
   const numColumns = 2;
   const tileSize = screenWidth / numColumns;
 
@@ -32,7 +33,7 @@ export default function IndexScreen({ navigation, route }) {
     navigation.setOptions({
       headerRight: () => (
         <TouchableOpacity onPress={() => navigation.navigate("CreateEdit", { title: "Create Post", post_id: null })}>
-          <MaterialCommunityIcons name="card-plus" size={48} style={{ color: styles.headerTint, marginRight: 20 }} />
+          <MaterialCommunityIcons name="card-plus" size={48} style={{ color: colors.primary, marginRight: 20 }} />
         </TouchableOpacity>
       ),
     });
@@ -63,7 +64,7 @@ export default function IndexScreen({ navigation, route }) {
       setIsLoading(false);
 
       console.log(error.response.data);
-      if (error.response.data.error = "Invalid token") {
+      if (error.response.data.error == "Invalid token") {
         dispatch({...logOutAction()})
         navigation.navigate("SignInSignUp");
       }
@@ -81,16 +82,16 @@ export default function IndexScreen({ navigation, route }) {
   function renderItem({ item }) {
     return (
       <TouchableOpacity onPress={() => navigation.navigate("Details", {post_id: item.id, created_user: item.createdUser})}>
-        <Image source={{ uri: API_IMAGE_URL + item.image }} style={{ width: tileSize, height: tileSize, margin: 1, borderColor: "black", borderWidth: 1, }} />
+        <Image source={{ uri: API_IMAGE_URL + item.image }} style={{ width: tileSize, height: tileSize, margin: 2, borderColor: "black", borderWidth: 1, }} />
       </TouchableOpacity>
     );
   }
 
   return (
-    <View style={styles.container}>
+    <View style={commonStyles.container}>
       { isLoading ? (
-          <View style={{flex: 1, justifyContent: "center", alignItems: "center"}}>
-            <ActivityIndicator size="large" color="#0000ff" />
+          <View style={commonStyles.centeredContainer}>
+            <ActivityIndicator size="large" />
           </View>
         ) : (
           <FlatList

@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from "react";
-import { ActivityIndicator, StyleSheet, View } from "react-native";
+import { ActivityIndicator, View } from "react-native";
 import { NavigationContainer } from "@react-navigation/native";
 import { createStackNavigator } from "@react-navigation/stack";
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { StatusBar } from 'expo-status-bar';
 
 import { MaterialCommunityIcons } from '@expo/vector-icons'; 
+import { DarkTheme as NavigationDarkTheme, DefaultTheme as NavigationDefaultTheme } from '@react-navigation/native';
+import { DarkTheme as PaperDarkTheme, DefaultTheme as PaperDefaultTheme, Provider as PaperProvider, } from 'react-native-paper';
+import { useTheme } from 'react-native-paper';
 
 import BlogStack from "./components/BlogStack";
 import SignInSignUpScreen from "./screens/SignInSignUpScreen";
@@ -15,22 +18,33 @@ import BrowseStackComponent from "./components/BrowseStack";
 import SearchStackComponent from "./components/SearchStack";
 
 import { useSelector, useDispatch, Provider } from 'react-redux';
-import { commonStyles, darkStyles, lightStyles } from "./styles/commonStyles";
+import { commonStyles } from "./styles/commonStyles";
 
 import store from "./redux/configureStore"
 
 const Stack = createStackNavigator();
 const LoggedInTab = createBottomTabNavigator();
 
-function LoggedInStackComponent() {
-  const isDark = useSelector(state => state.account.isDark);
-  const styles = { ...commonStyles, ...isDark ? darkStyles : lightStyles };
+const CombinedDefaultTheme = {
+  ...PaperDefaultTheme,
+  ...NavigationDefaultTheme,
+  colors: {
+    ...PaperDefaultTheme.colors,
+    ...NavigationDefaultTheme.colors,
+  },
+};
 
-  const headerOptions = {
-    headerStyle: styles.header,
-    headerTitleStyle: styles.headerTitle,
-    headerTintColor: styles.headerTint
-  }
+const CombinedDarkTheme = {
+  ...PaperDarkTheme,
+  ...NavigationDarkTheme,
+  colors: {
+    ...PaperDarkTheme.colors,
+    ...NavigationDarkTheme.colors,
+  },
+};
+
+function LoggedInStackComponent() {
+  const { colors } = useTheme();
 
   return (
     <LoggedInTab.Navigator
@@ -51,22 +65,17 @@ function LoggedInStackComponent() {
         },
       })}
       tabBarOptions={{
-        activeTintColor: isDark ? '#f4d47c' : 'darkblue',
-        inactiveTintColor: 'gray',
-        style: {
-          paddingBottom: 5,
-          backgroundColor: isDark ? '#181818' : 'white',
-        }
+        style: { paddingBottom: 5 }
       }}
       initialRouteName="AccountStack"
     >
-      <LoggedInTab.Screen name="Blog" component={BlogStack} options={{title: "My Blog"}}/>
+      <LoggedInTab.Screen name="Blog" component={BlogStack} options={{title: "My Gallery"}}/>
       <LoggedInTab.Screen name="BrowseStack" component={BrowseStackComponent} options={{title: "Explore"}}/>
       <LoggedInTab.Screen name="SearchStack" component={SearchStackComponent} options={{title: "Search"}}/>
       <LoggedInTab.Screen name="Account" component={AccountScreen} options={{
         title: "My Account",
-        headerStyle: styles.header,
-        headerTitleStyle: styles.headerTitle,
+        headerStyle: commonStyles.header,
+        headerTitleStyle: commonStyles.headerTitle,
         headerLeft: null
       }} />
     </LoggedInTab.Navigator>
@@ -76,7 +85,7 @@ function LoggedInStackComponent() {
 export default function AppWrapper() {
   return (
     <Provider store={store}>
-      <App />
+      <App /> 
     </Provider>
   )
 }
@@ -86,9 +95,7 @@ function App() {
   const [signedIn, setSignedIn] = useState(false);
 
   const token = useSelector(state => state.auth.token);
-
   const isDark = useSelector(state => state.account.isDark);
-  const styles = { ...commonStyles, ...isDark ? darkStyles : lightStyles };
 
   function loadToken() {
     if (token != null) {
@@ -102,31 +109,19 @@ function App() {
   }, []);
 
   return loading ? (
-    <View style={styles.container}>
+    <View style={commonStyles.centeredContainer}>
       <ActivityIndicator />
     </View>
   ) : (
-    <NavigationContainer>
-      <StatusBar style={isDark ? "light" : "dark"} />
-      <Stack.Navigator mode="modal" initialRouteName={signedIn ? "LoggedInStack" : "SignInSignUp"} animationEnabled={false}>
-        <Stack.Screen component={LoggedInStackComponent} name="LoggedInStack" options={{headerShown: false}} />
-        <Stack.Screen component={SignInSignUpScreen} name="SignInSignUp" options={{headerShown: false}} />
-        <Stack.Screen component={CameraScreen} name="Camera" options={{
-          title: "Take a photo",
-          headerStyle: styles.header,
-          headerTitleStyle: styles.headerTitle,
-          headerTintColor: styles.headerTint
-        }}/>
-      </Stack.Navigator>
-    </NavigationContainer>
+    <PaperProvider theme={isDark ? CombinedDarkTheme : CombinedDefaultTheme}>
+      <NavigationContainer theme={isDark ? CombinedDarkTheme : CombinedDefaultTheme}>
+        <StatusBar style={isDark ? "light" : "dark"} />
+        <Stack.Navigator mode="modal" initialRouteName={signedIn ? "LoggedInStack" : "SignInSignUp"} animationEnabled={false}>
+          <Stack.Screen component={LoggedInStackComponent} name="LoggedInStack" options={{headerShown: false}} />
+          <Stack.Screen component={SignInSignUpScreen} name="SignInSignUp" options={{headerShown: false}} />
+          <Stack.Screen component={CameraScreen} name="Camera" options={{ title: "Take a photo" }}/>
+        </Stack.Navigator>
+      </NavigationContainer>
+    </PaperProvider>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#fff",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-});
