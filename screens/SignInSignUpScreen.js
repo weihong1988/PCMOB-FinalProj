@@ -5,16 +5,16 @@ import * as ImageManipulator from 'expo-image-manipulator';
 import { HelperText, TextInput, Button } from 'react-native-paper';
 import { ActivityIndicator, Text, Title, Subheading, Paragraph, Headline, Caption } from 'react-native-paper';
 
-import { API, API_LOGIN, API_SIGNUP, API_WHOAMI, API_IMAGE_URL } from '../constants/API';
+import { API, API_LOGIN, API_SIGNUP } from '../constants/API';
 import axios from 'axios';
 
+import getLoggedInUser from "../components/LogInHelper";
 import PhotoPickerWithError from "../components/PhotoPickerWithError";
 
 import { commonStyles} from "../styles/commonStyles";
 import { useDispatch, useSelector } from 'react-redux';
 
 import { logInAction, logOutAction } from '../redux/ducks/blogAuth';
-import { uploadUserIDAction, uploadUsernameAction, uploadNicknameAction, uploadProfilePicAction, uploadCreatedAtAction } from '../redux/ducks/accountPref';
 
 export default function SignInSignUpScreen({ route, navigation }) {
   const [isLogIn, setIsLogIn] = useState(true);
@@ -26,10 +26,10 @@ export default function SignInSignUpScreen({ route, navigation }) {
   const [passwordError, setPasswordError] = useState("");
 
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [confirmPasswordError, setConfirmPasswordError] = useState("")
+  const [confirmPasswordError, setConfirmPasswordError] = useState("");
 
   const [phoneNo, setPhoneNo] = useState("");
-  const [phoneNoError, setPhoneNoError] = useState("")
+  const [phoneNoError, setPhoneNoError] = useState("");
 
   const [nickname, setNickname] = useState("");
   const [nicknameError, setNicknameError] = React.useState("");
@@ -54,7 +54,7 @@ export default function SignInSignUpScreen({ route, navigation }) {
   {
     const FormattedImage = await ImageManipulator.manipulateAsync(
       imageURI,
-      [{resize: { width: 1000 }}, { rotate: doRotate ? -90 : 0 }],
+      [{resize: { width: 1000 }}, { rotate: doRotate ? 90 : 0 }],
       {compress: 0.9, base64: true}
     );
 
@@ -89,33 +89,6 @@ export default function SignInSignUpScreen({ route, navigation }) {
     setIsLogIn(!isLogIn);
   }
 
-  async function getLoggedInUser(token) {
-    try {
-      setLoading(true);
-
-      const response = await axios.get(API + API_WHOAMI, {
-        headers: { Authorization: `JWT ${token}` },
-      });
-
-      dispatch({...uploadUserIDAction(), payload: response.data.user_id})
-      dispatch({...uploadUsernameAction(), payload: response.data.username})
-      dispatch({...uploadNicknameAction(), payload: response.data.nickname})
-      dispatch({...uploadProfilePicAction(), payload: API_IMAGE_URL + response.data.profilePic})
-      dispatch({...uploadCreatedAtAction(), payload: new Date(response.data.createdAt * 1000).toDateString()})
-
-      setLoading(false);
-    } 
-    catch (error) {
-      setLoading(false);
-
-      if (error.response)
-        console.log(error.response.data);
-
-      dispatch({...logOutAction()})
-      navigation.navigate("SignInSignUp")
-    }
-  }
-
   async function DoSignUp() {
     var ErrorFound = false;
     Keyboard.dismiss();
@@ -140,6 +113,24 @@ export default function SignInSignUpScreen({ route, navigation }) {
     }
     else
       setConfirmPasswordError("");
+
+    if (phoneNo == "") {
+      setPhoneNoError("Phone Number cannot be blank");
+      ErrorFound = true;
+    }
+    else
+    {
+      const parsedPhone = parseInt(phoneNo, 10);
+
+      if (parsedPhone > 80000000 && parsedPhone < 99999999)
+        setPhoneNoError("");
+      else
+      {
+        setPhoneNoError("Please enter a valid phone number");
+        ErrorFound = true;
+      }
+
+    }
 
     if (nickname == "") {
       setNicknameError("Nickname cannot be blank");
@@ -174,18 +165,26 @@ export default function SignInSignUpScreen({ route, navigation }) {
         else {
           setLoading(false);
 
+          const SavedUsername = username;
+          const SavedPassword = password;
+          const SavedPhoneNo = phoneNo;
+
+          setUsername("");
+          setPassword("");
           setConfirmPassword("");
+          setPhoneNo("");
           setNickname("");
           setImageData(null);
 
-          DoLogIn();
+          navigation.navigate("Verify", {username: SavedUsername, password: SavedPassword, phoneNo: SavedPhoneNo});
         }
       }
       catch (error) {
         setLoading(false);
-        console.log("Error signing up!");
-        console.log(error.response);
-        setErrorText(error.response.data.description);
+        console.log(error);
+
+        if (error.response.data)
+          setErrorText(error.response.data);
       }
     }
   }
@@ -219,26 +218,21 @@ export default function SignInSignUpScreen({ route, navigation }) {
         });
 
         dispatch({...logInAction(), payload: response.data.access_token})
-        setLoading(false);
+
+        getLoggedInUser(dispatch, response.data.access_token);
 
         setUsername("");
         setPassword("");
-
-        getLoggedInUser(response.data.access_token);
+        setLoading(false);
 
         navigation.navigate("LoggedInStack");
       }
       catch (error) {
         setLoading(false);
+        console.log(error);
 
-        if (error.response.status = 404) {
-          setErrorText("User does not exist")
-        }
-        else {
-          console.log("Error logging in!");
-          console.log(error);
-          setErrorText(error.response.data.description);
-        }
+        if (error.response.data)
+          setErrorText(error.response.data);
       }
     }
   }
@@ -278,7 +272,9 @@ export default function SignInSignUpScreen({ route, navigation }) {
           <Text style={additionalStyles.switchText}>{isLogIn ? "No account? Sign up now" : "Already have an account? Log in here."}</Text>
         </TouchableOpacity>
 
-        <Text style={commonStyles.errorText}>{errorText}</Text>
+        <Button mode="contained" onPress={() => {navigation.navigate("Verify", {username: "user1", password: "12345", phoneNo: "93275413"})}}>Debug</Button>
+
+        <Text style={{color: "red", marginTop: 10, fontSize: 18}}>{errorText}</Text>
       </ScrollView>
     </View>
   );

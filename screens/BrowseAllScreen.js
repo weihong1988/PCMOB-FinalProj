@@ -66,7 +66,7 @@ export default function BrowseAllScreen({ navigation, route }) {
   // The function to render each row in our FlatList
   function renderItem({ item }) {
     return (
-      <Card style={{borderBottomWidth: 3, borderRightWidth: 3, borderColor: colors.placeholder, marginHorizontal: 20, marginVertical: 10}}>
+      <Card style={{borderBottomWidth: 1, borderRightWidth: 1, borderColor: colors.placeholder, marginHorizontal: 20, marginVertical: 10}}>
         <Card.Title
           title={item.createdUserObject.nickname}
           subtitle={"Posted on: " + new Date(item.createdAt * 1000).toDateString()}

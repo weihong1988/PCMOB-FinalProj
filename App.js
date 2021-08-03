@@ -12,6 +12,7 @@ import { useTheme } from 'react-native-paper';
 
 import BlogStack from "./components/BlogStack";
 import SignInSignUpScreen from "./screens/SignInSignUpScreen";
+import OTPVerifyScreen from "./screens/OTPVerifyScreen";
 import CameraScreen from "./screens/CameraScreen";
 import AccountScreen from "./screens/AccountScreen";
 import BrowseStackComponent from "./components/BrowseStack";
@@ -120,6 +121,7 @@ function App() {
           <Stack.Screen component={LoggedInStackComponent} name="LoggedInStack" options={{headerShown: false}} />
           <Stack.Screen component={SignInSignUpScreen} name="SignInSignUp" options={{headerShown: false}} />
           <Stack.Screen component={CameraScreen} name="Camera" options={{ title: "Take a photo" }}/>
+          <Stack.Screen component={OTPVerifyScreen} name="Verify" options={{ title: "Account Verification" }}/>
         </Stack.Navigator>
       </NavigationContainer>
     </PaperProvider>

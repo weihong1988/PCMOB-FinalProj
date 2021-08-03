@@ -69,7 +69,7 @@ export default function CreateEditScreen({ route, navigation }) {
   {
     const FormattedImage = await ImageManipulator.manipulateAsync(
       imageURI,
-      [{resize: { width: 1000 }}, { rotate: doRotate ? -90 : 0 }],
+      [{resize: { width: 1000 }}, { rotate: doRotate ? 90 : 0 }],
       {compress: 0.9, base64: true}
     );
 

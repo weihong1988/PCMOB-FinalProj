@@ -180,7 +180,7 @@ export default function ShowScreen({ navigation, route }) {
             ) : (<View />)}
 
             {ExifData?.GPSLatitude && ExifData?.GPSLongitude ? (
-              <Card style={{width: "100%", marginBottom: 20, borderBottomWidth: 3, borderRightWidth: 3, borderColor: colors.placeholder}}>
+              <Card style={{width: "100%", marginBottom: 20, borderBottomWidth: 1, borderRightWidth: 1, borderColor: colors.placeholder}}>
                 <Card.Title title="Geolocation Tags" titleStyle={{textDecorationLine: "underline"}}/>
                 <Card.Content style={{marginBottom: 10}}>
                   <MapView 
@@ -206,39 +206,42 @@ export default function ShowScreen({ navigation, route }) {
               </Card>
             ) : (
               <View />
-            )
-            }
+            )}
             
-            <Card style={{width: "100%", borderBottomWidth: 3, borderRightWidth: 3, borderColor: colors.placeholder}}>
+            <Card style={{width: "100%", borderBottomWidth: 1, borderRightWidth: 1, borderColor: colors.placeholder}}>
               <Card.Title title="EXIF Data" titleStyle={{textDecorationLine: "underline"}}/>
               <Card.Content style={{marginBottom: 10}}>
                 <Text>{
                   `Camera: ${ExifData.Make ? (capitalizeFirstLetter(ExifData.Make) + " " + ExifData.Model) : "-"}\nTaken on: ${ExifData.DateTime ? ExifData.DateTime : "-"}\n\n` +
                   `GPS Coords:  ${(ExifData.GPSLatitude && ExifData.GPSLongitude) ? (ExifData.GPSLatitude.toFixed(6) + ", " + ExifData.GPSLongitude?.toFixed(6)) : "-"}\n\n` +
-                  `Shutter Speed: ${ExifData.ExposureTime ? (ExifData.ExposureTime + "s") : "-"}\nF-stop: ${ExifData.FNumber ? ExifData.FNumber : "-"}\nISO: ${ExifData.ISOSpeedRatings ? ExifData.ISOSpeedRatings : "-"}\nFlash fired: ${ExifData.Flash != undefined ? ExifData.Flash : "-"}`}
+                  `Shutter Speed: ${ExifData.ExposureTime ? (ExifData.ExposureTime.toFixed(3) + " sec") : "-"}\nF-stop: ${ExifData.FNumber ? ExifData.FNumber : "-"}\nISO: ${ExifData.ISOSpeedRatings ? ExifData.ISOSpeedRatings : "-"}\nFlash fired: ${ExifData.Flash != undefined ? ExifData.Flash : "-"}`}
                 </Text>
               </Card.Content>
             </Card>
 
-            <Text style={[{fontSize: 18, textDecorationLine: "underline", marginTop: 20, marginBottom: 5}]}>User Comments</Text>
-            <View style={{flexDirection: "row", width: "100%"}}>
+            <Title style={[{ textDecorationLine: "underline", marginTop: 20, marginBottom: 5}]}>User Comments</Title>
+            <View style={{flexDirection: "row", width: "100%", alignItems: "center", marginBottom: 20}}>
               <Image source={{ uri: API_IMAGE_URL + post?.createdUserObject.profilePic }} style={{ width: 80, height: 80 }} borderRadius={40} />
               <View style={{flexGrow: 1, marginLeft: 10}}>
-                <View style={[{height: 80, marginBottom: 10}]}>
-                  <TextInput 
-                    mode="outlined" 
-                    style={{width: "100%"}} 
-                    multiline={true}
-                    numberOfLines={4}
-                    textAlignVertical="top"
-                    label="Your Comments" 
-                    autoCapitalize="sentences" 
-                    autoCorrect={true}
-                    value={Comment} 
-                    onChangeText={data => setComment(data)} 
-                  />
-                </View>
-                <Button mode="contained" style={{alignSelf: "flex-end"}} onPress={() => addComment(postID)}>Comment</Button>
+                <TextInput 
+                  mode="outlined" 
+                  style={{width: "100%", height: 80}} 
+                  multiline={true}
+                  numberOfLines={4}
+                  textAlignVertical="top"
+                  label="Your Comments" 
+                  autoCapitalize="sentences" 
+                  autoCorrect={true}
+                  right={<TextInput.Icon 
+                    name="chat-plus" 
+                    forceTextInputFocus={false}
+                    onPress = {() => {
+                      addComment(postID);
+                    }}
+                  />}
+                  value={Comment} 
+                  onChangeText={data => setComment(data)} 
+                />
               </View>
             </View>
 
