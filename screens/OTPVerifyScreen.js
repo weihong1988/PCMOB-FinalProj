@@ -110,7 +110,7 @@ export default function OTPVerifyScreen({ route, navigation }) {
           OTPtext,
         });
 
-        //await DoLogIn();
+        await DoLogIn();
       }
       catch (error) {
         setLoading(false);

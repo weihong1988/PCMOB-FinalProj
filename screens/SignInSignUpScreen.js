@@ -272,8 +272,6 @@ export default function SignInSignUpScreen({ route, navigation }) {
           <Text style={additionalStyles.switchText}>{isLogIn ? "No account? Sign up now" : "Already have an account? Log in here."}</Text>
         </TouchableOpacity>
 
-        <Button mode="contained" onPress={() => {navigation.navigate("Verify", {username: "user1", password: "12345", phoneNo: "93275413"})}}>Debug</Button>
-
         <Text style={{color: "red", marginTop: 10, fontSize: 18}}>{errorText}</Text>
       </ScrollView>
     </View>
